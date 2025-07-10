@@ -1,35 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+// import { logout } from '../slices/authSlice';
 
-function App() {
-  const [count, setCount] = useState(0)
+const Header = () => {
+    const dispatch = useDispatch();
+    const { userInfo } = useSelector((state) => state.auth);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    const logoutHandler = () => {
+        dispatch(logout());
+    };
 
-export default App
+    return (
+        <header className="bg-primary text-white">
+            <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+                <Link to="/" className="text-2xl font-bold">
+                    Course Booking Platform
+                </Link>
+                <div className="flex items-center">
+                    <Link to="/courses" className="mx-2">
+                        Courses
+                    </Link>
+                    {userInfo ? (
+                        <>
+                            {userInfo.role === 'instructor' && (
+                                <Link to="/instructor/dashboard" className="mx-2">
+                                    Instructor Dashboard
+                                </Link>
+                            )}
+                            {userInfo.role === 'admin' && (
+                                <Link to="/admin/dashboard" className="mx-2">
+                                    Admin Dashboard
+                                </Link>
+                            )}
+                            <div className="dropdown mx-2">
+                                <button className="btn dropdown-toggle">
+                                    {userInfo.name}
+                                </button>
+                                <div className="dropdown-menu">
+                                    <Link to="/profile" className="dropdown-item">
+                                        Profile
+                                    </Link>
+                                    <Link to="/my-bookings" className="dropdown-item">
+                                        My Bookings
+                                    </Link>
+                                    <button onClick={logoutHandler} className="dropdown-item">
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="mx-2">
+                                Sign In
+                            </Link>
+                            <Link to="/register" className="mx-2 btn-primary">
+                                Sign Up
+                            </Link>
+                        </>
+                    )}
+                </div>
+            </nav>
+        </header>
+    );
+};
+
+export default Header;

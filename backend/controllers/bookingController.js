@@ -3,7 +3,7 @@ const Course = require('../models/course');
 const User = require('../models/user');
 const Notification = require('../models/notification');
 const { sendBookingConfirmationEmail } = require('../utils/emailService');
-const stripe = require('stripe')(process.env.SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
@@ -278,7 +278,7 @@ const stripeWebhook = async (req, res) => {
         event = stripe.webhooks.constructEvent(
             req.body,
             sig,
-            process.env.SECRET_KEY
+            process.env.STRIPE_WEBHOOK_SECRET
         );
     } catch (err) {
         return res.status(400).send(`Webhook Error: ${err.message}`);

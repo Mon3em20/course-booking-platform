@@ -4,96 +4,6 @@ const Booking = require('../models/booking');
 const Session = require('../models/session');
 const Review = require('../models/review');
 
-// @desc    Get admin dashboard stats
-// @route   GET /api/admin/stats
-// @access  Private/Admin
-const getAdminStats = async (req, res) => {
-    try {
-        // User stats
-        const totalUsers = await User.countDocuments({});
-        const totalStudents = await User.countDocuments({ role: 'student' });
-        const totalInstructors = await User.countDocuments({ role: 'instructor' });
-
-        // Course stats
-        const totalCourses = await Course.countDocuments({});
-        const activeCourses = await Course.countDocuments({ isActive: true });
-
-        // Booking stats
-        const totalBookings = await Booking.countDocuments({});
-        const completedBookings = await Booking.countDocuments({ status: 'confirmed', paymentStatus: 'completed' });
-
-        // Revenue stats
-        const revenue = await Booking.aggregate([
-            { $match: { paymentStatus: 'completed' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } }
-        ]);
-
-        const totalRevenue = revenue.length > 0 ? revenue[0].total : 0;
-
-        // Monthly revenue (last 6 months)
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-        const monthlyRevenue = await Booking.aggregate([
-            {
-                $match: {
-                    paymentStatus: 'completed',
-                    bookingDate: { $gte: sixMonthsAgo }
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        year: { $year: '$bookingDate' },
-                        month: { $month: '$bookingDate' }
-                    },
-                    total: { $sum: '$amount' }
-                }
-            },
-            { $sort: { '_id.year': 1, '_id.month': 1 } }
-        ]);
-
-        // Recent bookings
-        const recentBookings = await Booking.find({})
-            .populate('course', 'title')
-            .populate('student', 'name email')
-            .sort({ bookingDate: -1 })
-            .limit(10);
-
-        // Popular courses
-        const popularCourses = await Course.aggregate([
-            { $project: { title: 1, enrolledCount: { $size: '$enrolledStudents' } } },
-            { $sort: { enrolledCount: -1 } },
-            { $limit: 10 }
-        ]);
-
-        res.json({
-            userStats: {
-                totalUsers,
-                totalStudents,
-                totalInstructors
-            },
-            courseStats: {
-                totalCourses,
-                activeCourses
-            },
-            bookingStats: {
-                totalBookings,
-                completedBookings
-            },
-            revenueStats: {
-                totalRevenue,
-                monthlyRevenue
-            },
-            recentBookings,
-            popularCourses
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
-    }
-};
-
 // @desc    Get all users
 // @route   GET /api/admin/users
 // @access  Private/Admin
@@ -178,6 +88,7 @@ const updateUser = async (req, res) => {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
             user.role = req.body.role || user.role;
+            user.isActive = req.body.isActive !== undefined ? req.body.isActive : user.isActive;
 
             if (req.body.password) {
                 user.password = req.body.password;
@@ -190,6 +101,7 @@ const updateUser = async (req, res) => {
                 name: updatedUser.name,
                 email: updatedUser.email,
                 role: updatedUser.role,
+                isActive: updatedUser.isActive
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -225,6 +137,96 @@ const deleteUser = async (req, res) => {
         } else {
             res.status(404).json({ message: 'User not found' });
         }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Get admin dashboard stats
+// @route   GET /api/admin/stats
+// @access  Private/Admin
+const getAdminStats = async (req, res) => {
+    try {
+        // User stats
+        const totalUsers = await User.countDocuments({});
+        const totalStudents = await User.countDocuments({ role: 'student' });
+        const totalInstructors = await User.countDocuments({ role: 'instructor' });
+
+        // Course stats
+        const totalCourses = await Course.countDocuments({});
+        const activeCourses = await Course.countDocuments({ isActive: true });
+
+        // Booking stats
+        const totalBookings = await Booking.countDocuments({});
+        const completedBookings = await Booking.countDocuments({ status: 'confirmed', paymentStatus: 'completed' });
+
+        // Revenue stats
+        const revenue = await Booking.aggregate([
+            { $match: { paymentStatus: 'completed' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+
+        const totalRevenue = revenue.length > 0 ? revenue[0].total : 0;
+
+        // Monthly revenue (last 6 months)
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        const monthlyRevenue = await Booking.aggregate([
+            {
+                $match: {
+                    paymentStatus: 'completed',
+                    bookingDate: { $gte: sixMonthsAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$bookingDate' },
+                        month: { $month: '$bookingDate' }
+                    },
+                    total: { $sum: '$amount' }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // Recent bookings
+        const recentBookings = await Booking.find({})
+            .populate('course', 'title')
+            .populate('student', 'name email')
+            .sort({ bookingDate: -1 })
+            .limit(10);
+
+        // Popular courses
+        const popularCourses = await Course.aggregate([
+            { $project: { title: 1, enrolledCount: { $size: '$enrolledStudents' } } },
+            { $sort: { enrolledCount: -1 } },
+            { $limit: 10 }
+        ]);
+
+        res.json({
+            userStats: {
+                totalUsers,
+                totalStudents,
+                totalInstructors
+            },
+            courseStats: {
+                totalCourses,
+                activeCourses
+            },
+            bookingStats: {
+                totalBookings,
+                completedBookings
+            },
+            revenueStats: {
+                totalRevenue,
+                monthlyRevenue
+            },
+            recentBookings,
+            popularCourses
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error', error: error.message });

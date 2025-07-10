@@ -142,7 +142,6 @@ const getStudentCertificates = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
-
 // @desc    Get course certificates (for instructors)
 // @route   GET /api/certificates/course/:courseId
 // @access  Private/Instructor

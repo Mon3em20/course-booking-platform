@@ -21,6 +21,28 @@ const userSchema = new mongoose.Schema({
         enum: ['student', 'instructor', 'admin'],
         default: 'student'
     },
+    profileImage: {
+        type: String,
+    },
+    bio: {
+        type: String,
+    },
+    phone: {
+        type: String,
+    },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    lastLogin: {
+        type: Date
+    },
     createdAt: {
         type: Date,
         default: Date.now

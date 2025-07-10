@@ -16,7 +16,6 @@ router.route('/')
 router.get('/student', protect, getStudentCertificates);
 router.get('/course/:courseId', protect, instructor, getCourseCertificates);
 
-// Public route for certificate verification
 router.get('/verify/:certificateNumber', verifyCertificate);
 
 router.route('/:id')
